@@ -1,85 +1,109 @@
 # Test-repo
+
+
 Implementation Document
 
 Title: Change Window Validation using IBM UDeploy and ServiceNow Integration
 
 1. Purpose
 
-The purpose of this implementation is to ensure that deployments are executed only within the approved change window defined in ServiceNow change requests. By validating the current system time against the ServiceNow ticket’s start and end dates, we prevent unauthorized or out-of-window deployments, thereby maintaining compliance and minimizing production risks.
+The purpose of this implementation is to introduce an automated control that ensures deployments are executed strictly within the approved change windows defined in ServiceNow change tickets. At present, deployments may be triggered without a direct check against the authorized window, which can lead to compliance issues, failed audits, or disruptions in production environments. By integrating IBM UrbanCode Deploy (UDeploy) with ServiceNow through the Change Deployment Window plugin, the deployment process will validate the current system time against the start and end times specified in the change ticket. If the time falls within the valid window, the deployment process will continue; otherwise, the process will be aborted automatically. This approach minimizes manual oversight, reduces risk, and enforces adherence to organizational change management policies.
 
 2. Scope
 
-Applies to deployments triggered via IBM UrbanCode Deploy (UCD).
-
-Integration leverages the IBM UCD – ServiceNow Change Deployment Window Plugin.
-
-Validation covers:
-
-ServiceNow Change Ticket details (Start Date, End Date).
-
-Current system time of deployment execution.
-
-Action:
-
-If current time is within change window → Execute component process.
-
-If current time is outside change window → Abort process.
+This implementation applies to all deployments executed through IBM UDeploy that are initiated from the CloudBees CD self-service deployment release pipeline. When a release pipeline is executed in CloudBees CD, the change ticket details will be passed as inputs to UDeploy. UDeploy, in turn, will validate the ticket details against ServiceNow before executing the actual component process. This integration ensures that the enforcement of change windows is consistent across environments, starting with lower-level test systems and ultimately extending to production environments.
 
 3. Approach
 
-Plugin Usage
+The solution will leverage the ServiceNow Change Deployment Window plugin that is available within IBM UDeploy. This plugin enables UDeploy to communicate directly with ServiceNow via its REST APIs. The plugin requires a set of inputs such as the ServiceNow instance URL, the change ticket ID, the ticket’s start and end dates, and valid integration credentials.
 
-Use the ServiceNow Change Deployment Window plugin in IBM UDeploy.
+The end-to-end process will function as follows:
 
-Inputs required:
+A deployment is triggered in CloudBees CD through a self-service release pipeline.
 
-ServiceNow URL
+As part of this execution, the change ticket details (ticket ID, start date, and end date) are passed from CloudBees CD into UDeploy.
 
-Change Ticket ID
+UDeploy uses the ServiceNow plugin to connect to the ServiceNow instance, authenticate with the provided credentials, and retrieve the details of the specified change ticket.
 
-Start Date & End Date
+The plugin validates the current system time against the approved start and end dates of the change ticket.
 
-Username & Password (integration credentials)
+If the current time falls within the defined window, UDeploy allows the component process to proceed. If the time is outside the window, the process is aborted automatically, and the deployment does not move forward.
 
-Process Flow
+This approach ensures that every deployment is governed by the ServiceNow change management process, and no deployment bypasses the approved time frame.
 
-Deployment triggered in UDeploy.
-
-Plugin connects to ServiceNow via REST API using provided credentials.
-
-Plugin fetches change ticket details and validates:
-
-If current time ≥ Start Date and ≤ End Date → allow deployment.
-
-Otherwise → abort deployment.
-
-Security
-
-Credentials stored securely in UDeploy (encrypted).
-
-Access controlled via Platform Team’s credential management.
+From a security perspective, the ServiceNow credentials will not be hardcoded or exposed in pipeline scripts. Instead, they will be securely stored and managed by the Platform Team in UDeploy’s credential store, ensuring that only authorized processes can access them.
 
 4. Prerequisites
 
-IBM UDeploy environment set up and operational.
+Before this implementation can be executed, the following prerequisites must be satisfied:
 
-ServiceNow instance accessible from UDeploy nodes.
+A functional IBM UDeploy environment must be available and configured to accept deployment triggers from CloudBees CD.
 
-ServiceNow Change Management module enabled.
+The ServiceNow instance must be accessible from the UDeploy environment. Network connectivity, including firewall and proxy configurations, should be verified in advance.
 
-Service account credentials with read access to change tickets.
+A ServiceNow service account with appropriate permissions (read access to change requests) must be created and shared by the Platform Team.
 
-Firewall/network connectivity validated between UDeploy and ServiceNow.
+The Change Management module in ServiceNow must be enabled and actively used by the organization.
+
+The ServiceNow Change Deployment Window plugin must be installed and available in the UDeploy plugin catalog.
 
 5. Validation
 
-Design Review: Approach confirmed with Leads.
+The approach has already been reviewed and confirmed by the technical leads. Initial discussions with the Platform Team have verified that network connectivity between UDeploy and ServiceNow exists and is functional. Additionally, the availability of the ServiceNow Change Deployment Window plugin within UDeploy has been confirmed.
 
-Connectivity Check: Platform Team validated UDeploy ↔ ServiceNow communication.
+The next step of validation will take place during a test sprint, where different deployment scenarios will be executed. These scenarios will verify that the plugin correctly validates the change window and responds appropriately when the deployment falls outside the allowed time frame.
 
-Plugin Availability: Verified plugin is available in UDeploy catalog.
+6. Roles and Responsibilities
 
-Dry Run: To be executed in non-production environment.
+The successful implementation of this solution requires collaboration across multiple teams:
+
+Platform Team is responsible for providing the ServiceNow integration credentials, validating connectivity between UDeploy and ServiceNow, and securely storing the credentials in UDeploy.
+
+DevOps Team will be responsible for configuring the plugin within UDeploy, integrating it into the deployment process, and conducting test deployments. The team will also handle any required scripting to manage the flow of data from CloudBees CD to UDeploy.
+
+Change Management Team will ensure that all change tickets in ServiceNow are created with accurate start and end dates. They will also monitor compliance with the new process and validate that deployments are occurring within authorized windows.
+
+7. Testing Plan
+
+To ensure robustness, the following test cases will be executed:
+
+Positive Test Case: Trigger a deployment within the approved change window. The deployment should proceed as expected.
+
+Negative Test Case: Attempt to deploy outside the approved window. The deployment should be aborted by UDeploy.
+
+Invalid Ticket Test: Provide an incorrect or non-existent change ticket ID. The process should fail gracefully and not proceed.
+
+Credential Test: Use expired or invalid credentials to validate error handling. The deployment should fail with an authentication error.
+
+Successful completion of these scenarios in lower environments will provide confidence to move the solution into production.
+
+8. Risks and Mitigation
+
+There are several risks associated with this implementation:
+
+Incorrect or incomplete change ticket details may block valid deployments. This risk will be mitigated by educating change managers and enforcing validation checks at the time of ticket creation.
+
+Plugin or integration failures could halt deployments unexpectedly. To mitigate this, a fallback procedure will be in place where the validation step can be temporarily disabled in UDeploy until the issue is resolved.
+
+Credential expiry or mismanagement may prevent the plugin from authenticating with ServiceNow. Regular credential rotation schedules will be enforced by the Platform Team.
+
+Network outages may prevent connectivity between UDeploy and ServiceNow. In such cases, deployments will be temporarily blocked until connectivity is restored.
+
+9. Backout Plan
+
+In case the integration causes deployment disruptions, the validation step in UDeploy can be disabled quickly to allow deployments to proceed without ServiceNow validation. During this time, change windows will be validated manually by the Change Management Team until the issue with the plugin or configuration is resolved. If necessary, a rollback to the previous pipeline configuration will also be performed.
+
+10. Next Steps
+
+The immediate next step is to coordinate with the Platform Team to obtain the necessary ServiceNow credentials and configure them securely in UDeploy. Once credentials are in place, the DevOps Team will implement the validation step into the deployment process and conduct testing across multiple scenarios in the upcoming sprint. Following successful validation in lower environments, the integration will be promoted to production pipelines.
+
+11. References
+
+IBM UrbanCode Deploy ServiceNow Change Deployment Window Plugin Documentation
+
+ServiceNow Change Management Guidelines
+
+Internal DevOps Integration Standards
 
 6. Roles & Responsibilities
 
@@ -91,47 +115,6 @@ Validate connectivity.
 
 Manage credential storage.
 
-DevOps Team:
-
-Configure plugin in UDeploy.
-
-Implement process flow with validation step.
-
-Conduct testing in lower environments.
-
-Change Management Team:
-
-Ensure tickets are updated with correct start and end dates.
-
-Approve change window validations.
-
-7. Testing Plan
-
-Positive Scenario
-
-Trigger deployment within valid change window → Deployment proceeds.
-
-Negative Scenario
-
-Trigger deployment before/after window → Deployment aborted.
-
-Invalid Ticket
-
-Provide incorrect change ticket ID → Deployment fails gracefully.
-
-Credential Issue
-
-Test invalid credentials → Validate error handling.
-
-8. Risks & Mitigation
-Risk	Impact	Mitigation
-Incorrect ServiceNow ticket dates	Deployment blocked or bypassed	Educate change managers; enforce date validation
-Plugin failure	Deployment may fail unexpectedly	Fallback process to abort deployment
-Credential expiry	Plugin authentication fails	Regular credential rotation with Platform team
-Connectivity outage	Integration fails	Retry mechanism and fallback alerts
-9. Backout Plan
-
-If integration causes deployment failures, disable the Change Deployment Window validation step in UDeploy.
 
 Revert to manual validation of change window until issue is fixed.
 
