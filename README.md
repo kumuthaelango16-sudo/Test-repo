@@ -1,52 +1,44 @@
-Implementation Plan: Replacing EC-JIRA with EC-REST in CloudBees CD
-Objective
+#!/bin/bash
+set -e
 
-The goal of this change is to replace the EC-JIRA plugin, which will no longer be supported after September 30, 2025, with the EC-REST plugin in CloudBees CD. This ensures that all self-service deployments continue to work smoothly without disruption.
+# Usage: ./zip_artifacts.sh <build_type>
+BUILD_TYPE=${1:-maven}
+ZIP_NAME="artifact_${BUILD_TYPE}.zip"
 
-Scope
+# -------------------------------
+# Define include & exclude patterns
+# -------------------------------
+case "$BUILD_TYPE" in
+  maven)
+    INCLUDE_FILES=("*.yml" "target/*.?ar" "target/libs/*.?ar")
+    EXCLUDE_FILES=("**/test-classes/**" "**/*.log" "**/node_modules/**")
+    ;;
+  node)
+    INCLUDE_FILES=("package*.json" "dist/**" "*.yml")
+    EXCLUDE_FILES=("**/node_modules/**" "**/*.log" "**/coverage/**")
+    ;;
+  python)
+    INCLUDE_FILES=("*.py" "requirements.txt" "*.yml")
+    EXCLUDE_FILES=("**/__pycache__/**" "**/*.log")
+    ;;
+  gradle)
+    INCLUDE_FILES=("build/libs/*.?ar" "*.gradle" "*.yml")
+    EXCLUDE_FILES=("**/test-results/**" "**/*.log")
+    ;;
+  *)
+    echo "❌ Unknown build type: $BUILD_TYPE"
+    exit 1
+    ;;
+esac
 
-This change covers:
+# -------------------------------
+# Build the zip command dynamically
+# -------------------------------
+echo "🔹 Creating $ZIP_NAME"
+echo "   Includes: ${INCLUDE_FILES[*]}"
+echo "   Excludes: ${EXCLUDE_FILES[*]}"
 
-Updating all Create Release processes to use EC-REST instead of EC-JIRA.
+# Combine include and exclude
+zip -r "$ZIP_NAME" ${INCLUDE_FILES[@]} $(printf ' -x %s' "${EXCLUDE_FILES[@]}") >/dev/null
 
-Updating all Property Merge configurations.
-
-Updating all Deployment Templates.
-
-Testing and validating that JIRA integrations continue to work after the update.
-
-Not in Scope:
-
-Any non-CloudBees CD JIRA integrations.
-
-New feature requests or enhancements outside this plugin change.
-
-Impact Analysis (After Implementation)
-
-All deployments in CloudBees CD will now use EC-REST.
-
-JIRA ticket operations (create, update, property mapping) will keep working as expected.
-
-Teams may need to adjust slightly to new configuration settings in EC-REST.
-
-Business operations and release processes will continue without interruption.
-
-Risk is minimal after testing, but if issues arise, they can be handled by rollback or fixes.
-
-Backout Plan
-
-During implementation, a backup will be taken for all templates, property merges, and release processes.
-
-If any issue occurs during deployment (before September 30):
-
-All changes will be reverted to the previous state using the backup.
-
-Any minor issues will be fixed with manual configuration adjustments.
-
-If issues occur after September 30:
-
-Rollback to EC-JIRA will not be possible as it will no longer be supported.
-
-Issues will be debugged and fixed directly in EC-REST.
-
-Do you also want me to add a “Validation Steps” section (like checklist items to confirm everything works after change)? That will make your document look complete and audit-ready.
+echo "✅ Zip created: $ZIP_NAME"
