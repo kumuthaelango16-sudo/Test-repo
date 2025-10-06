@@ -1,22 +1,17 @@
-import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
+Title:
+Automate SSL Import Monitoring and Renewal Pipeline
 
-// Step 1: Read your normal JSON file
-def input = new JsonSlurper().parse(new File('input.json'))
+Description:
+Implement an automated monitoring pipeline to track SSL certificate expiry. If a certificate is set to expire within 2 days, the pipeline should automatically import the renewed SSL certificate and place it in the designated target folders. This automation aims to reduce manual intervention and prevent service disruptions due to expired certificates.
 
-// Step 2: Convert all key/value pairs to DSL lines
-def dslLines = input.collect { key, value ->
-    "    ${key} = '${value}'"
-}.join("\n")
+Acceptance Criteria:
 
-// Step 3: Wrap it in a DSL block
-def dslScript = "dsl-artifactVersion {\n${dslLines}\n}"
+The pipeline should monitor SSL certificate expiry dates daily.
 
-// Step 4: Prepare CBCD JSON format
-def cbcdJson = JsonOutput.toJson([dsl: dslScript])
+If an SSL certificate is expiring within 2 days, it should automatically trigger the import process.
 
-// Step 5: Save it to a file (optional)
-new File('dslRequest.json').text = cbcdJson
+The renewed SSL certificate must be added to the correct target folders.
 
-println "✅ CBCD DSL JSON generated successfully!"
-println cbcdJson
+A notification or log entry should confirm successful import and deployment.
+
+The process should handle both on-prem and cloud environments (if applicable).
