@@ -1,44 +1,22 @@
-#!/bin/bash
-set -e
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
 
-# Usage: ./zip_artifacts.sh <build_type>
-BUILD_TYPE=${1:-maven}
-ZIP_NAME="artifact_${BUILD_TYPE}.zip"
+// Step 1: Read your normal JSON file
+def input = new JsonSlurper().parse(new File('input.json'))
 
-# -------------------------------
-# Define include & exclude patterns
-# -------------------------------
-case "$BUILD_TYPE" in
-  maven)
-    INCLUDE_FILES=("*.yml" "target/*.?ar" "target/libs/*.?ar")
-    EXCLUDE_FILES=("**/test-classes/**" "**/*.log" "**/node_modules/**")
-    ;;
-  node)
-    INCLUDE_FILES=("package*.json" "dist/**" "*.yml")
-    EXCLUDE_FILES=("**/node_modules/**" "**/*.log" "**/coverage/**")
-    ;;
-  python)
-    INCLUDE_FILES=("*.py" "requirements.txt" "*.yml")
-    EXCLUDE_FILES=("**/__pycache__/**" "**/*.log")
-    ;;
-  gradle)
-    INCLUDE_FILES=("build/libs/*.?ar" "*.gradle" "*.yml")
-    EXCLUDE_FILES=("**/test-results/**" "**/*.log")
-    ;;
-  *)
-    echo "❌ Unknown build type: $BUILD_TYPE"
-    exit 1
-    ;;
-esac
+// Step 2: Convert all key/value pairs to DSL lines
+def dslLines = input.collect { key, value ->
+    "    ${key} = '${value}'"
+}.join("\n")
 
-# -------------------------------
-# Build the zip command dynamically
-# -------------------------------
-echo "🔹 Creating $ZIP_NAME"
-echo "   Includes: ${INCLUDE_FILES[*]}"
-echo "   Excludes: ${EXCLUDE_FILES[*]}"
+// Step 3: Wrap it in a DSL block
+def dslScript = "dsl-artifactVersion {\n${dslLines}\n}"
 
-# Combine include and exclude
-zip -r "$ZIP_NAME" ${INCLUDE_FILES[@]} $(printf ' -x %s' "${EXCLUDE_FILES[@]}") >/dev/null
+// Step 4: Prepare CBCD JSON format
+def cbcdJson = JsonOutput.toJson([dsl: dslScript])
 
-echo "✅ Zip created: $ZIP_NAME"
+// Step 5: Save it to a file (optional)
+new File('dslRequest.json').text = cbcdJson
+
+println "✅ CBCD DSL JSON generated successfully!"
+println cbcdJson
