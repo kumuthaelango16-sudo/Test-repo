@@ -1,42 +1,39 @@
 Story Title:
 
-Enabler – Document accelerator approach for migrating UDeploy configurations to CloudBees CD
+POC: Pass Sonar profile as a parameter in CloudBees pipeline to run source code analysis
 
-Description:
+Story Description:
 
-As part of the migration initiative from UDeploy to CloudBees CD, we need to define and document an accelerator approach to streamline and standardize the migration process.
-This story focuses on analyzing the existing UDeploy configuration structure, identifying reusable patterns, and formulating a step-by-step migration approach. The outcome will serve as reference documentation for future migrations.
+As part of this POC, we need to enable the CloudBees CI pipeline to dynamically accept a SonarQube profile as an input parameter. The selected profile from the dropdown should be passed to the pipeline, which will then trigger a SonarQube scan of the source code using the specified profile.
 
-Scope of Work:
+This approach will help us validate whether multiple Sonar profiles can be used within the same pipeline based on user selection and improve flexibility in code quality analysis.
 
-Analyze existing UDeploy configuration structure and deployment models.
+The implementation involves:
 
-Identify common components, reusable templates, and integration points.
+Creating a parameterized build option in the CloudBees pipeline to select a Sonar profile from a dropdown list.
 
-Evaluate mapping between UDeploy entities (applications, components, processes) and CloudBees CD equivalents.
+Passing the selected profile to the SonarQube scan step in the Jenkinsfile (or shared library).
 
-Define a high-level migration approach/accelerator framework.
-
-Document the migration approach, best practices, and any prerequisites.
-
-Share the documentation for internal review and feedback.
-
-Deliverables:
-
-Draft document outlining the migration/accelerator approach.
-
-Mapping matrix between UDeploy and CloudBees CD configurations.
-
-Finalized documentation published in the team’s knowledge repository (e.g., Confluence or SharePoint).
+Validating that the pipeline executes successfully and the analysis report is generated in SonarQube using the chosen profile.
 
 Acceptance Criteria:
 
-✅ UDeploy configuration analysis completed and documented.
+✅ AC1: Pipeline should display a dropdown parameter to select the Sonar profile (e.g., Profile_A, Profile_B, Profile_C).
 
-✅ Mapping of UDeploy entities to CloudBees CD entities is clearly defined.
+✅ AC2: The selected Sonar profile should be passed as a parameter to the SonarQube analysis stage in the pipeline.
 
-✅ High-level accelerator-based migration approach documented with steps and examples.
+✅ AC3: The SonarQube scan should execute using the corresponding profile configuration and rules.
 
-✅ Document reviewed and approved by key stakeholders.
+✅ AC4: SonarQube dashboard should reflect that the analysis ran under the selected profile (verify via project settings or analysis logs).
 
-✅ Final version uploaded to the designated documentation repository.
+✅ AC5: Pipeline execution logs should clearly display which profile was used during the scan.
+
+✅ AC6: Documentation should be created outlining how to configure and use the Sonar profile parameter in the pipeline.
+
+Additional Notes:
+
+This is a POC to validate dynamic profile selection; production implementation will follow after successful validation.
+
+SonarQube server and credentials must be pre-configured in CloudBees.
+
+Can leverage parameters block in Jenkinsfile and -Dsonar.profile property in Sonar scanner execution.
