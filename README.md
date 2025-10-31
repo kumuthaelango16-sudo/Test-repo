@@ -1,13 +1,35 @@
-This session is scheduled with Suresh for a Knowledge Transfer and demo of the activities he has completed, as his last working day is on October 30.
+def verifyBinaryAndCleanup(String basePath, String versionFolder, String fileName) {
 
-Agenda:
+    def filePath = "${basePath}/${versionFolder}/${fileName}"
+    steps.echo "Checking file: ${filePath}"
 
-Demo of completed activities
+    // Check if file exists
+    if (steps.fileExists(filePath)) {
+        steps.echo "✅ Binary found: ${filePath}"
+        return true
+    }
 
-Discussion on key deliverables and dependencies
+    steps.echo "❌ ERROR: Binary not found at ${filePath}"
 
-Handover of documentation and access details
+    // Check and cleanup version directory if empty
+    def versionPath = "${basePath}/${versionFolder}"
 
-Q&A and next steps
+    try {
+        def fileCount = steps.sh(
+            script: "ls -1 ${versionPath} 2>/dev/null | wc -l",
+            returnStdout: true
+        ).trim()
 
-Please join the session to capture relevant points for smooth transition and continuity.
+        if (fileCount == "0") {
+            steps.echo "🧹 Version folder empty. Cleaning: ${versionPath}"
+            steps.sh "rm -rf ${versionPath}"
+        } else {
+            steps.echo "Folder has files. Skipping cleanup for ${versionPath}"
+        }
+    } catch (Exception ex) {
+        steps.echo "⚠️ Unable to list folder: ${versionPath} — Maybe it doesn't exist."
+    }
+
+    steps.error("Stopping pipeline. Required binary missing: ${fileName}")
+    return false
+}
