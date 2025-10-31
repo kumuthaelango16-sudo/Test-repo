@@ -1,9 +1,18 @@
 def verifyBinaryAndCleanup(String basePath, String versionFolder, String fileName) {
 
     def filePath = "${basePath}/${versionFolder}/${fileName}"
+    def versionPath = "${basePath}/${versionFolder}"
+
     steps.echo "Checking file: ${filePath}"
 
-    // Check if file exists
+    // ✅ Check if version folder exists first
+    if (!steps.fileExists(versionPath)) {
+        steps.echo "❌ ERROR: Version folder not found: ${versionPath}"
+        steps.error("Stopping pipeline. Version directory missing: ${versionFolder}")
+        return false
+    }
+
+    // ✅ Check if binary file exists
     if (steps.fileExists(filePath)) {
         steps.echo "✅ Binary found: ${filePath}"
         return true
@@ -11,25 +20,20 @@ def verifyBinaryAndCleanup(String basePath, String versionFolder, String fileNam
 
     steps.echo "❌ ERROR: Binary not found at ${filePath}"
 
-    // Check and cleanup version directory if empty
-    def versionPath = "${basePath}/${versionFolder}"
+    // ✅ Folder exists but file not present — check folder content
+    def fileCount = steps.sh(
+        script: "shopt -s nullglob dotglob; files=(${versionPath}/*); echo \${#files[@]}",
+        returnStdout: true
+    ).trim()
 
-    try {
-        def fileCount = steps.sh(
-            script: "ls -1 ${versionPath} 2>/dev/null | wc -l",
-            returnStdout: true
-        ).trim()
-
-        if (fileCount == "0") {
-            steps.echo "🧹 Version folder empty. Cleaning: ${versionPath}"
-            steps.sh "rm -rf ${versionPath}"
-        } else {
-            steps.echo "Folder has files. Skipping cleanup for ${versionPath}"
-        }
-    } catch (Exception ex) {
-        steps.echo "⚠️ Unable to list folder: ${versionPath} — Maybe it doesn't exist."
+    if (fileCount == "0") {
+        steps.echo "🧹 Folder empty — deleting: ${versionPath}"
+        steps.sh "rm -rf '${versionPath}'"
+    } else {
+        steps.echo "📂 Folder not empty — skip delete: ${versionPath}"
     }
 
+    // ✅ Stop pipeline
     steps.error("Stopping pipeline. Required binary missing: ${fileName}")
     return false
 }
