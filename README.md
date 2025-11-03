@@ -1,106 +1,28 @@
-CloudBees CI Dynamic Worker Node Failure – RCA & Solution Plan
-Summary
+The failure occurred because the Kubernetes pod anti-affinity rules applied to the CloudBees controller and CJOC pods forced them to run across 18 out of 19 available cluster nodes. Due to this configuration, dynamic worker pods were only allowed to run on the single remaining node. When multiple pipelines triggered dynamic agents, this one node quickly reached its CPU and memory limits. As a result, Kubernetes was unable to schedule new dynamic worker pods and started terminating existing ones. This caused Jenkins to lose connection with the agents, leading to pipeline failures.
 
-On 02-Sep-2025, CloudBees CI pipelines using dynamic Kubernetes workers failed during execution. Investigation revealed that Kubernetes pod anti-affinity rules limited dynamic worker pods to only one node in the TKGI cluster. When pipeline load increased, this node ran out of resources, causing pod failures and pipeline agent disconnections.
+In summary, dynamic worker pod scheduling was unintentionally restricted to one node, resulting in resource exhaustion and agent failure under load
 
-To address this, a dedicated node group for dynamic workers was created and tested in the non-prod environment. The tests were successful, and the same approach will be implemented in production.
 
-Issue Description
 
-The CloudBees deployment has 19 worker nodes. Due to pod anti-affinity settings applied to CloudBees Controller and CJOC pods, these pods were forced to spread across 18 nodes, leaving only one node available for dynamic worker pods.
+Reproduction and Testing in Non-Prod
 
-During high build activity, multiple pipelines attempted to spin up dynamic agents, which caused:
+To validate the problem and verify the solution, the issue was first recreated in the non-production CloudBees CI environment. The available worker nodes were intentionally limited to mimic the production setup where only one node was available for dynamic agents. Under this configuration, multiple pipeline jobs were triggered. The same agent failures and pod scheduling issues were observed, confirming that the problem was caused by node restriction and resource exhaustion.
 
-Node resource saturation (CPU & memory)
+Once the issue was reproduced, a dedicated worker node group was configured in non-prod. The CloudBees dynamic pod template was updated to point to this new node pool, ensuring worker pods were scheduled on dedicated nodes instead of sharing nodes with controllers. Load testing was then performed by triggering high-volume builds to simulate real pipeline activity. Dynamic pods were created successfully, queued correctly when capacity was full, and no failures or disconnections occurred.
 
-Dynamic worker pod eviction/failure
+This testing confirmed that assigning a separate node group for dynamic workers provides reliable pod scheduling and prevents resource contention, fully resolving the issue in a controlled non-production environment.
 
-Jenkins losing connection to agents
+Work Done & Findings
 
-Pipeline failures and increased queue times
+After identifying the issue, the behavior was reproduced in the non-production CloudBees environment by simulating a limited-node scenario. As expected, dynamic worker pods failed when multiple pipelines were triggered, confirming that the issue was due to node restriction and resource saturation.
 
-Typical Error Messages
+To address this, a dedicated worker node group was created in the non-prod cluster, and the dynamic pod template was updated to schedule pods only on this new worker pool. Controller pods continued using their existing nodes. Multiple test builds were then executed, including high-concurrency runs (100+ jobs). The dynamic workers were scheduled successfully, queued properly when capacity was full, and no pod failures or agent disconnects were observed.
 
-Cannot contact globalpodtemplate...
-runningAgent deleted; node was terminated
-Could not connect to dynamic pod due to resource failure
+These tests validated that separating controller nodes from dynamic worker nodes resolves the issue and ensures stable scaling of pipeline workloads.
 
-Root Cause
+The recommended solution is to introduce a dedicated worker node group for dynamic agents in the production TKGI cluster. This ensures that dynamic worker pods are scheduled on separate nodes, preventing any resource conflict with controller and CJOC pods. By isolating worker nodes from controller nodes, we restore capacity for dynamic scaling and avoid bottlenecks caused by affinity restrictions.
 
-Anti-affinity rules forced controllers across 18 nodes
+To implement this solution, we will first create and configure the dedicated worker node pool in the production cluster. The CloudBees controller configuration will continue using the existing nodes, and the dynamic pod template will be updated to point to the new worker pool through appropriate node selectors or labels. After applying the configuration, we will trigger pipeline workloads to confirm that dynamic agents launch correctly and scale as expected.
 
-Dynamic workers restricted to one node
+Once deployed, the environment will be closely monitored to ensure stable scheduling, agent connectivity, and resource utilization. This rollout approach minimizes risk and ensures a smooth transition from the temporary static worker setup. The plan ensures that CloudBees pipelines can reliably scale without encountering resource contention or node availability constraints.
 
-Node reached resource limit under load
-
-Kubernetes evicted or blocked worker pods
-
-Jenkins pipelines failed due to missing agents
-
-Reproduction & Testing in Non-Prod
-
-To confirm the issue and test the solution:
-
-Simulated reduced node availability in non-prod
-
-Observed the same worker pod failures
-
-Created a separate node group for dynamic agents
-
-Updated dynamic pod templates to use new node group
-
-Triggered 100+ dynamic jobs for load validation
-
-Test Results
-
-Dynamic pods distributed across new node group
-
-No agent eviction or startup failures
-
-Excess pods queued normally
-
-Pipelines executed without failure
-
-Temporary fallback to static worker nodes was used in production until validation was complete.
-
-Proposed Solution
-
-Move to dedicated worker node group for dynamic agents in production.
-
-This ensures:
-
-Controller pods remain isolated and stable
-
-Dynamic agents scale independently during peak load
-
-No single-node scheduling bottleneck
-
-Improved reliability and CI throughput
-
-Additionally, resource requests/limits and monitoring will be enabled to avoid future saturation.
-
-Implementation Plan
-
-Steps:
-
-Create dedicated worker pool in production cluster
-
-Update CloudBees controller node selector config
-
-Modify dynamic pod template to use new pool label
-
-Validate scheduling and agent connectivity
-
-Monitor usage, load behavior, and build queues
-
-Conclusion
-
-The pipeline failures were due to anti-affinity constraints limiting dynamic pods to one node. The dedicated worker node strategy has been thoroughly tested in non-prod and proven effective. Implementing this in production will restore stability and support scalable dynamic pipeline execution.
-
-Next Steps
-
-Roll out the dedicated worker node configuration to production
-
-Monitor cluster and pipeline performance post-cutover
-
-Move workload gradually and keep static worker option as fallback for initial period
