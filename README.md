@@ -1,3 +1,5 @@
-was planning to work on the dynamic worker node setup this morning, but CloudBees CI Dev is down. I have shared the update in the catch-up chat and prepared a detailed document on the pod anti-affinity fix steps and findings.
-
-I’m on planned leave today for my mother-in-law’s treatment. I’ll try to log in tonight to sync up on the CF_HOME process changes.
+Please review your current sprint stories and create the necessary sub-tasks before the daily scrum call.
+If any stories require Lead validation, assign the respective sub-tasks to the Leads and ensure they are visible on the board, so Leads can provide updates during the scrum.
+Verify that each story includes a proper description and updated acceptance criteria.
+If you have any questions or need clarity, discuss them with the Leads.
+Kindly make sure to follow this process for all future sprints.
