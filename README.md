@@ -1,36 +1,47 @@
-Skillset Requirements
-1. Scripting Proficiency (Groovy and Shell):
+Slide 1: Problem Statement
 
-Mandatory:
+CloudBees CI pipelines using dynamic worker nodes failed during execution
 
-Strong hands-on in Groovy scripting for Jenkins/CloudBees pipelines.
+Dynamic agents were unable to start or connect
 
-Basic to intermediate Shell scripting for automation and troubleshooting.
+Builds were stuck in queue or terminated unexpectedly
 
-Can be trained on:
+Issue impacted pipeline reliability and build completion
 
-Python scripting for automation and CI/CD integration.
+Slide 2: Root Cause
 
-2. DevOps and Build Automation Expertise:
+Pod anti-affinity settings forced controller and CJOC pods to occupy 18 of 19 cluster nodes
 
-Mandatory:
+Only one node left available for dynamic worker pods
 
-Hands-on with Jenkins/CloudBees CI/CD and Shared Libraries.
+During high load, the single node reached CPU and memory limits
 
-Experience integrating SonarQube and Fortify.
+Kubernetes failed to schedule or evicted dynamic pods
 
-Good understanding of SCM branching/merging and deployment scripting.
+Resulted in agent disconnects and pipeline failures
 
-Experience with Maven, Gradle, and Node.js build pipelines.
+Slide 3: Reproduction & Testing (Non-Prod)
 
-Can be trained on:
+Simulated the same setup in non-production environment
 
-SonarQube and Fortify integration best practices.
+Restricted nodes to reproduce the scheduling limitation
 
-uDeploy, CloudBees CI/CD, and JAT tools.
+Dynamic agent failures observed as in production
 
-Kubernetes, Docker, and advanced Python scripting.
+Created dedicated worker node group and updated pod templates
 
-Ideal Candidate:
-A hands-on DevOps Build Engineer skilled in Groovy scripting, CI/CD, and tool integrations.
-Familiarity with uDeploy, JAT, or containerization tools is a plus and can be trained.
+Performed load testing with 100+ parallel jobs
+
+Dynamic pods launched and queued successfully with no failures
+
+Slide 4: Solution
+
+Implement a dedicated node group for dynamic worker pods in production
+
+Controller pods continue using existing nodes
+
+Isolates dynamic agents → avoids resource contention
+
+Enables stable scaling and reliable job execution
+
+Continue using static worker nodes as temporary workaround until rollout
