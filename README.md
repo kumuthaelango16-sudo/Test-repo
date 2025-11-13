@@ -1,47 +1,91 @@
-Slide 1: Problem Statement
 
-CloudBees CI pipelines using dynamic worker nodes failed during execution
+1. Scripting Proficiency (Groovy and Shell):
+Mandatory:
 
-Dynamic agents were unable to start or connect
+Strong hands-on in Groovy scripting for Jenkins/CloudBees pipelines.
 
-Builds were stuck in queue or terminated unexpectedly
+Basic to intermediate Shell scripting for automation and troubleshooting.
 
-Issue impacted pipeline reliability and build completion
+Can be trained on:
 
-Slide 2: Root Cause
+Python scripting.
 
-Pod anti-affinity settings forced controller and CJOC pods to occupy 18 of 19 cluster nodes
+Advanced Shell scripting.
 
-Only one node left available for dynamic worker pods
+2. DevOps and Build Automation Expertise:
+Mandatory:
 
-During high load, the single node reached CPU and memory limits
+Hands-on with any CI/CD tool (preferably Jenkins/CloudBees CI/CD) and Shared Libraries.
 
-Kubernetes failed to schedule or evicted dynamic pods
+Good understanding of SCM branching/merging and deployment scripting.
 
-Resulted in agent disconnects and pipeline failures
+Experience with Maven, Gradle, and Node.js build pipelines.
 
-Slide 3: Reproduction & Testing (Non-Prod)
+Can be trained on:
 
-Simulated the same setup in non-production environment
+SonarQube, Fortify, NexusIQ and Nexus integration with CloudBees CI.
 
-Restricted nodes to reproduce the scheduling limitation
+IBM uDeploy, CloudBees CI/CD, and JAT (Jenkins Automation Template).
 
-Dynamic agent failures observed as in production
+DORA metrics and analytics dashboards.
 
-Created dedicated worker node group and updated pod templates
+HashiCorp Vault integration.
 
-Performed load testing with 100+ parallel jobs
+CloudBees CD Self-service process.
 
-Dynamic pods launched and queued successfully with no failures
+3. AWS EKS knowledge:
+Can be trained on:
 
-Slide 4: Solution
+Kubernetes and Docker,
 
-Implement a dedicated node group for dynamic worker pods in production
+Qualys, Helm and Cosign.
 
-Controller pods continue using existing nodes
+You said:
+Instead of sentences. Shorten it with bullet points
+ChatGPT said:
+Here’s the same content in short, clear bullet points format:
 
-Isolates dynamic agents → avoids resource contention
+1. Scripting Proficiency (Groovy & Shell)
+Mandatory:
 
-Enables stable scaling and reliable job execution
+Groovy scripting – Jenkins/CloudBees pipelines
 
-Continue using static worker nodes as temporary workaround until rollout
+Shell scripting – automation & troubleshooting
+
+Can be trained on:
+
+Python scripting
+
+Advanced Shell scripting
+
+2. DevOps & Build Automation Expertise
+Mandatory:
+
+Hands-on CI/CD tools (preferably Jenkins/CloudBees)
+
+Shared Libraries experience
+
+SCM branching/merging knowledge
+
+Deployment scripting
+
+Build tools – Maven, Gradle, Node.js
+
+Can be trained on:
+
+SonarQube, Fortify, NexusIQ, Nexus integration with CloudBees CI
+
+IBM uDeploy, CloudBees CI/CD, JAT (Jenkins Automation Template)
+
+DORA metrics & analytics dashboards
+
+HashiCorp Vault integration
+
+CloudBees CD self-service process
+
+3. AWS EKS Knowledge
+Can be trained on:
+
+Kubernetes & Docker
+
+Qualys, Helm & Cosign
