@@ -1,40 +1,16 @@
-#!/bin/bash
+RITM2164987
 
-# -------- CONFIG --------
-SN_INSTANCE="https://<instance>.service-now.com"
-SN_USER="your_user"
-SN_PASS="your_password"
-CHG_NUMBER="CHG0001234"
-# -------------------------
+Issue Description:
+The build failed during the build stage due to the introduction of NodeJS version 21.7.3.
 
-echo "Checking change window for $CHG_NUMBER..."
+Issue Status:
+Completed
 
-# Call ServiceNow API
-response=$(curl -s -u "$SN_USER:$SN_PASS" \
- "$SN_INSTANCE/api/now/table/change_request?sysparm_query=number=$CHG_NUMBER&sysparm_fields=planned_start_date,planned_end_date")
+Resolution:
+The required NodeJS versions have been added to the shared library configurations and scripts.
 
-# Extract the start and end times
-start=$(echo "$response" | jq -r '.result[0].planned_start_date')
-end=$(echo "$response" | jq -r '.result[0].planned_end_date')
+Root Cause:
+The build failed because NodeJS version 21.7.3 was not supported by the shared library.
 
-if [[ -z "$start" || -z "$end" || "$start" == "null" ]]; then
-  echo "ERROR: Unable to fetch change window for $CHG_NUMBER"
-  exit 1
-fi
-
-echo "Start Time: $start"
-echo "End Time  : $end"
-
-# Convert times to epoch
-start_epoch=$(date -d "$start" +%s)
-end_epoch=$(date -d "$end" +%s)
-now_epoch=$(date +%s)
-
-# Validation logic
-if [[ $now_epoch -ge $start_epoch && $now_epoch -le $end_epoch ]]; then
-  echo "✔ Current time is WITHIN the change window."
-  exit 0
-else
-  echo "❌ ERROR: Current time is OUTSIDE the change window. Stopping process!"
-  exit 1
-fi
+Permanent Fix:
+A permanent fix has been implemented in the shared library.
