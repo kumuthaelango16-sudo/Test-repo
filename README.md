@@ -1,17 +1,1 @@
-runs all our meetings smoothly and keeps everything on time.
-
-He helps remove blockers quickly so the team can continue working without delays.
-
-He communicates clearly and makes sure everyone understands the priorities.
-
-He encourages teamwork and creates a space where everyone feels comfortable sharing ideas.
-
-He keeps the team motivated and maintains a positive work environment.
-
-He takes ownership of the sprint goals and guides us toward completing our work successfully.
-
-He provides regular updates to stakeholders so everything stays transparent.
-
-He listens to any issues we raise and suggests practical improvements.
-
-He helps the team stay focused, organized, and continuously improving.
+As discussed in last week’s meeting, we are currently testing the additional scenarios, including load testing across all 19 worker nodes and the failure scenarios. Once this testing is completed, we will review the results with the leads and plan the rollout based on their suggestions.
