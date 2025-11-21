@@ -1,33 +1,27 @@
-Meeting Minutes – Summary for Leads
+Went Well
 
-UDeploy to CD Migration
+Thanks to everyone for the hard work this year, especially those who supported during production releases.
 
-Update the pilot production date to align with the end of Sprint 7.
+This year gave all of us a good learning experience, especially with production pre-validations and production release activities.
 
-Update the rollout plan to reflect the rollout for PCF non-production environments.
+The team is following the Agile process well. Thank you, Sindhura, for guiding us.
 
-BODA
+The Friday cross-training sessions helped everyone understand different initiatives and the overall work.
 
-Prepare the next steps for Multibranch implementation based on the feedback received.
+Team coordination has been good, and members supported each other whenever needed.
 
-Unified
+Earlier, we did not have enough documentation, but this year we improved by creating documents for each story.
 
-Validate if the proposed date for JAT onboarding is feasible.
+Needs Improvement
 
-Analytics
+We had issues with the burndown chart. To improve, the team should try to work on one story at a time. After moving a story to validation, they can pick the next one. Once validation is done, close the story so the burndown shows correct progress.
 
-Update the timelines for Stage-level metrics and DORA metrics, as both are currently marked as TBD.
+The team should finalize the approach before starting the work. Many gaps are being found during PR reviews.
 
-Self-Healing
+We should close the sprint on Wednesday and start the next sprint on Thursday morning without delays.
 
-On hold scenarios will remain paused until after the freeze.
+Team members should take full ownership of their tasks until the stories are completely closed.
 
-If any issues arise in upcoming releases, they will be reported. If no issues occur and the dependency on Jira Cloud remains unresolved, remove those scenarios from the slide.
+Poker planning should be done in every sprint since it was useful.
 
-Self-Service Deployment
-
-For the request to use a single change ticket for multiple component deployments, Faisal suggested scheduling a meeting to review feasibility.
-
-Feature Flags
-
-Sandeep will revisit and confirm the POC date (currently 12/03).
+Weekend platform activities should be handed over to the platform team so our team does not have to stretch on weekends.
