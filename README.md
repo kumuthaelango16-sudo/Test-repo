@@ -1,1 +1,1 @@
-Due to a personal emergency, I will not be available during the first half of the day. I have updated my Jira stories with the latest information. As discussed in yesterday’s scrum call, I have assigned the RITMs to Pardeep and Vartika.
+Had a call with vendor Sruthi regarding the new container creation with updated resources and limits. We tried the changes suggested during the call, but they didn’t work. I’ve shared all the details with the vendor, and Sruthi mentioned they will review and get back to us on Thursday.”
