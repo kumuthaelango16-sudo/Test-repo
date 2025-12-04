@@ -1,1 +1,1 @@
-discussed yesterday, we have revised and formatted the App Automation dashboard status for all initiatives. Please review the status and dates for your respective initiatives and confirm.”
+The sprint is now in progress. Please go through your assigned stories, ensuring the descriptions and acceptance criteria are accurate. Contact the leads for any clarifications. Kindly call out any dependencies or blockers and create the necessary sub-tasks for your stories. Rephrase 
