@@ -1,1 +1,1 @@
-The sprint is now in progress. Please go through your assigned stories, ensuring the descriptions and acceptance criteria are accurate. Contact the leads for any clarifications. Kindly call out any dependencies or blockers and create the necessary sub-tasks for your stories. Rephrase 
+We are planning to perform performance and load testing in CloudBees CI. Could you please confirm if it is possible to run parallel scans using the same Fortify ID in Fortify Lab? Will this create any issue
