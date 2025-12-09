@@ -1,59 +1,109 @@
-SAST VS DAST
-SAST (Static Application Security Testing) - white box
-Black-box testing (analyzes running application)
-SAST - before deployment catches issues early
-DAST - test the api and web interfaces
+Stage 4: Security Scan (Fortify Upgrade & Validation)
+Injection attacks: SQL injection, command injection, where malicious code is injected into user input to execute unintended database queries or system commands. 
 
-How Sonar Scan Works in CloudBees Pipeline
-SonarRunner (now known as SonarScanner) is a command-line tool used to analyze source code and send the results to SonarQube  for code quality analysis
-Pipeline starts (typically from Jenkinsfile in a repo).
-Build environment is prepared (agent is provisioned – either static or dynamic worker).
-Sonar scanner is invoked within a stage of the pipeline:
-For Maven: mvn sonar:sonar
-For Gradle: ./gradlew sonarqube
-For Node.js: sonar-scanner or via npm script
-Scan happens locally on the build agent, collecting:
-Source code
-Test results
-Code coverage (if configured)
-Static analysis
-The scanner pushes results to the SonarQube server:
-Typically via sonar.host.url
-Authentication via token
+Cross-site scripting (XSS): Injecting malicious JavaScript code into a web page to steal user data or perform unauthorized actions. 
 
-SonarQube server then analyzes the data, stores it, and displays it on the dashboard.
+Broken authentication: Weak password policies, lack of proper session management, allowing unauthorized access to sensitive features. 
 
-📍 Where the Scan Happens
+Just like SonarQube, Fortify integrates with CloudBees CI pipelines to perform static application security testing (SAST) — but with some key differences in how and where it operates.
 
-The actual scan (code parsing and metrics collection) happens on the CloudBees build agent (worker node).
-The analysis and reporting (rules, quality gate, etc.) happen on the SonarQube server.
-Think of it as: "Scan runs locally in the pipeline container/agent, then analysis is finalized remotely in SonarQube."
-----_----_----------------------_-----------------------------------
-✅ 
+🔧 How Fortify Works in CloudBees Pipeline
+Pipeline execution starts on a CloudBees build agent (worker node).
+Fortify tools like sourceanalyzer (SCA) or FortifyScanCentral are installed or pulled into the agent.
+Fortify Client -CLI utility to interact with Fortify SSC (Software Security Center).
 
-Let me know your tech stack (Node, Maven, etc.), and I can show a tailored example.
+Fortify performs the following steps:
 
-SonarRunner (now known as SonarScanner) is a command-line tool used to analyze source code and send the results to SonarQube  for code quality analysis. It acts as the client-side scanner in the SonarQube ecosystem, processing source code and submitting metrics, issues, and other insights.
+🧩 Typical Fortify Workflow in Pipeline
+Step 1: Translate (Static Code Capture)
 
-How SonarRunner (SonarScanner) Works During Sonar Scans
-Prepares the Analysis
-Reads the configuration from sonar-project.properties, environment variables, or command-line arguments.
-Identifies the programming languages, project structure, and rulesets to apply.
-Processes the Code
-Parses the source code files.
-Computes static code analysis metrics like code coverage, bugs, vulnerabilities, code smells, duplications, and maintainability.
-Extracts metadata such as lines of code (LOC), complexity, and dependencies.
+Captures code and builds dependencies.
+sourceanalyzer -b myapp mvn clean compile 
+This step collects code, dependencies, and dataflow information into a local Fortify project (in the build agent).
 
-Interacts With SonarQube Server
-Sends the analyzed data to the SonarQube server for further processing.
-Retrieves quality profiles, rules, and settings.
-Final Reporting
-The results are stored in SonarQube, where developers can view them through the web UI.
-If any quality gates fail, it can break the CI/CD pipeline or notify developers.
-Types of Sonar Scanners
+Step 2: Scan
+Analyzes the collected data for security issues.
+sourceanalyzer -b myapp -scan -f myapp.fpr 
+Generates an .fpr(fortify project report) file with vulnerabilities.
 
-SonarScanner CLI – Standalone command-line tool.
-SonarScanner for Maven – Integrated with Maven builds (mvn sonar:sonar).
-SonarScanner for Gradle – Works with Gradle (sonarqube plugin).
-SonarScanner for MSBuild – For .NET projects.
-SonarScanner inside Jenkins, GitHub Actions, or CI/CD Pipelines – Automated execution during builds.
+Step 3 (Optional): Upload to SSC (Fortify Software Security Center)
+Fortify Client -CLI utility to interact with Fortify SSC (Software Security Center).
+fortifyclient uploadFPR -file myapp.fpr -project MyApp -version 1.0 
+This uploads results to Fortify SSC for web-based viewing, dashboards, policy checks, etc.
+
+Fortify SSC: A web-based Fortify portal for
+Viewing scan results
+
+📍 Where the Scan Happens
+
+Translate and scan happens on the CloudBees build agent (local, dynamic, or container-based).
+
+Analysis and dashboards happen in Fortify SSC, if configured.
+
+"Once the Fortify security scan validation is complete, the pipeline moves to the next stage.
+
+
+------------------------------
+
+Key Fortify Components Explained
+
+📁 1. .fpr (Fortify Project Results)
+
+File type: Fortify Project Results file
+
+Purpose: Stores the results of the static code analysis — all vulnerabilities found, issue metadata, and metrics.
+
+Usage:
+
+Can be opened in Fortify Audit Workbench (local GUI tool for manual review).
+
+Can be uploaded to Fortify SSC for centralized dashboards, reporting, and policy checks.
+
+🧠 2. sourceanalyzer
+
+Tool name: The main CLI tool of Fortify SCA (Static Code Analyzer)
+Used for:
+
+Translate step: Captures the code and dependencies during build.
+Scan step: Analyzes the captured data for security flaws.
+Example:
+sh
+Copy code
+sourceanalyzer -b myapp mvn clean compile # Translation sourceanalyzer -b myapp -scan -f myapp.fpr # Scan and generate .fpr 
+-b is a build ID to link translation and scan steps.
+
+🔧 3. fortifyclient (aka Fortify CLI or Fortify SSC Client)
+Purpose: CLI utility to interact with Fortify SSC (Software Security Center).
+
+Used for:
+
+Uploading .fpr files to SSC
+
+Managing projects and versions
+
+Example:
+
+sh
+
+Copy code
+
+fortifyclient uploadFPR -file myapp.fpr -project MyApp -version 1.0 
+
+🖥️ 4. SSC (Software Security Center)
+
+What it is: A web-based Fortify portal for:
+
+Viewing scan results
+
+Managing projects and applications
+
+Defining and enforcing security policies
+
+Integrating with CI/CD (quality gates)
+
+Features:
+
+Dashboards and issue tracking
+Audit workflows
+Integration with ticketing (e.g., JIRA)
+
