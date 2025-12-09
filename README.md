@@ -1,109 +1,65 @@
-Stage 4: Security Scan (Fortify Upgrade & Validation)
-Injection attacks: SQL injection, command injection, where malicious code is injected into user input to execute unintended database queries or system commands. 
+Purpose of Nexus IQ Scans in CI Pipeline Execution
+Nexus IQ Server is the policy engine of Sonatype that performs Software Composition Analysis (SCA) — scanning your dependencies (Maven, npm, etc.) for:
 
-Cross-site scripting (XSS): Injecting malicious JavaScript code into a web page to steal user data or perform unauthorized actions. 
+Open source license issues
+Security vulnerabilities (CVEs)
+Policy violations
 
-Broken authentication: Weak password policies, lack of proper session management, allowing unauthorized access to sensitive features. 
+Nexus IQ scans are used in Continuous Integration (CI) pipelines to analyze and assess software dependencies for security vulnerabilities, license compliance, and policy violations. The primary benefits include:
 
-Just like SonarQube, Fortify integrates with CloudBees CI pipelines to perform static application security testing (SAST) — but with some key differences in how and where it operates.
+Security Analysis: Detects vulnerabilities in open-source libraries and dependencies.
 
-🔧 How Fortify Works in CloudBees Pipeline
-Pipeline execution starts on a CloudBees build agent (worker node).
-Fortify tools like sourceanalyzer (SCA) or FortifyScanCentral are installed or pulled into the agent.
-Fortify Client -CLI utility to interact with Fortify SSC (Software Security Center).
+License Compliance: Ensures adherence to open-source licensing requirements.
 
-Fortify performs the following steps:
+Policy Enforcement: Blocks builds if dependencies violate security policies.
 
-🧩 Typical Fortify Workflow in Pipeline
-Step 1: Translate (Static Code Capture)
+Risk Mitigation: Provides remediation guidance for identified vulnerabilities.
 
-Captures code and builds dependencies.
-sourceanalyzer -b myapp mvn clean compile 
-This step collects code, dependencies, and dataflow information into a local Fortify project (in the build agent).
+Governance & Audit: Helps maintain an audit trail for dependency usage.
 
-Step 2: Scan
-Analyzes the collected data for security issues.
-sourceanalyzer -b myapp -scan -f myapp.fpr 
-Generates an .fpr(fortify project report) file with vulnerabilities.
+The scan itself (dependency collection) happens on the build agent (CloudBees worker).
 
-Step 3 (Optional): Upload to SSC (Fortify Software Security Center)
-Fortify Client -CLI utility to interact with Fortify SSC (Software Security Center).
-fortifyclient uploadFPR -file myapp.fpr -project MyApp -version 1.0 
-This uploads results to Fortify SSC for web-based viewing, dashboards, policy checks, etc.
+The policy evaluation happens on the Nexus IQ Server (external to CI).
 
-Fortify SSC: A web-based Fortify portal for
-Viewing scan results
+The scan tool acts as a client, sending data to the IQ Server for final evaluation.
 
-📍 Where the Scan Happens
+Why is Fortify Application ID Required for Nexus IQ Scans?
 
-Translate and scan happens on the CloudBees build agent (local, dynamic, or container-based).
+The Fortify Application ID is required for Nexus IQ scans because many organizations integrate Fortify (SAST) with Nexus IQ (SCA) for comprehensive security analysis. The Application ID serves the following purposes:
 
-Analysis and dashboards happen in Fortify SSC, if configured.
+Project Identification: Links the Nexus IQ scan results to a specific FPurpose of Nexus IQ Scans in CI Pipeline Execution
+Nexus IQ Server is the policy engine of Sonatype that performs Software Composition Analysis (SCA) — scanning your dependencies (Maven, npm, etc.) for:
 
-"Once the Fortify security scan validation is complete, the pipeline moves to the next stage.
+Open source license issues
+Security vulnerabilities (CVEs)
+Policy violations
 
+Nexus IQ scans are used in Continuous Integration (CI) pipelines to analyze and assess software dependencies for security vulnerabilities, license compliance, and policy violations. The primary benefits include:
 
-------------------------------
+Security Analysis: Detects vulnerabilities in open-source libraries and dependencies.
 
-Key Fortify Components Explained
+License Compliance: Ensures adherence to open-source licensing requirements.
 
-📁 1. .fpr (Fortify Project Results)
+Policy Enforcement: Blocks builds if dependencies violate security policies.
 
-File type: Fortify Project Results file
+Risk Mitigation: Provides remediation guidance for identified vulnerabilities.
 
-Purpose: Stores the results of the static code analysis — all vulnerabilities found, issue metadata, and metrics.
+Governance & Audit: Helps maintain an audit trail for dependency usage.
 
-Usage:
+The scan itself (dependency collection) happens on the build agent (CloudBees worker).
 
-Can be opened in Fortify Audit Workbench (local GUI tool for manual review).
+The policy evaluation happens on the Nexus IQ Server (external to CI).
 
-Can be uploaded to Fortify SSC for centralized dashboards, reporting, and policy checks.
+The scan tool acts as a client, sending data to the IQ Server for final evaluation.
 
-🧠 2. sourceanalyzer
+Why is Fortify Application ID Required for Nexus IQ Scans?
 
-Tool name: The main CLI tool of Fortify SCA (Static Code Analyzer)
-Used for:
+The Fortify Application ID is required for Nexus IQ scans because many organizations integrate Fortify (SAST) with Nexus IQ (SCA) for comprehensive security analysis. The Application ID serves the following purposes:
 
-Translate step: Captures the code and dependencies during build.
-Scan step: Analyzes the captured data for security flaws.
-Example:
-sh
-Copy code
-sourceanalyzer -b myapp mvn clean compile # Translation sourceanalyzer -b myapp -scan -f myapp.fpr # Scan and generate .fpr 
--b is a build ID to link translation and scan steps.
+Project Identification: Links the Nexus IQ scan results to a specific Fortify application profile.
 
-🔧 3. fortifyclient (aka Fortify CLI or Fortify SSC Client)
-Purpose: CLI utility to interact with Fortify SSC (Software Security Center).
+Correlation Between SAST & SCA: Helps correlate static code vulnerabilities (Fortify) with dependency vulnerabilities (Nexus IQ).
 
-Used for:
+Centralized Reporting: Allows consolidated security insights in dashboards.
 
-Uploading .fpr files to SSC
-
-Managing projects and versions
-
-Example:
-
-sh
-
-Copy code
-
-fortifyclient uploadFPR -file myapp.fpr -project MyApp -version 1.0 
-
-🖥️ 4. SSC (Software Security Center)
-
-What it is: A web-based Fortify portal for:
-
-Viewing scan results
-
-Managing projects and applications
-
-Defining and enforcing security policies
-
-Integrating with CI/CD (quality gates)
-
-Features:
-
-Dashboards and issue tracking
-Audit workflows
-Integration with ticketing (e.g., JIRA)
-
+Policy-Based Actions: Enables automated enforcement of security policies across both SAST and SCA scans.ortify application profile.
