@@ -1,65 +1,20 @@
-Purpose of Nexus IQ Scans in CI Pipeline Execution
-Nexus IQ Server is the policy engine of Sonatype that performs Software Composition Analysis (SCA) — scanning your dependencies (Maven, npm, etc.) for:
+Yesterday, we worked with Asharaf until 3 AM on generating failure scenarios. Even after setting CPU to 2 and memory requests/limits to 4Gi, the pod did not utilize full capacity, so we could not reproduce the failure. We identified an alternative approach to trigger full-capacity load on the pod.
+Asharaf has also requested testing of additional scenarios, for which evidence collection is required from TKGI worker nodes. Since our platform team does not have node access, TKGI team support is needed. Asharaf will schedule a call with the TKGI team to proceed.
 
-Open source license issues
-Security vulnerabilities (CVEs)
-Policy violations
+Option 2: Concise Daily Standup Style
 
-Nexus IQ scans are used in Continuous Integration (CI) pipelines to analyze and assess software dependencies for security vulnerabilities, license compliance, and policy violations. The primary benefits include:
+Worked with Asharaf till 3 AM on failure scenario testing.
 
-Security Analysis: Detects vulnerabilities in open-source libraries and dependencies.
+Could not reproduce the failure as the pod didn’t utilize the full CPU/memory despite updated limits.
 
-License Compliance: Ensures adherence to open-source licensing requirements.
+Found another method to generate full-capacity pod load.
 
-Policy Enforcement: Blocks builds if dependencies violate security policies.
+Additional scenarios identified; need TKGI team for node-level evidence (platform team has no worker node access).
 
-Risk Mitigation: Provides remediation guidance for identified vulnerabilities.
+Asharaf will set up a call with the TKGI team.
 
-Governance & Audit: Helps maintain an audit trail for dependency usage.
+Option 3: Email/Slack Ready
 
-The scan itself (dependency collection) happens on the build agent (CloudBees worker).
-
-The policy evaluation happens on the Nexus IQ Server (external to CI).
-
-The scan tool acts as a client, sending data to the IQ Server for final evaluation.
-
-Why is Fortify Application ID Required for Nexus IQ Scans?
-
-The Fortify Application ID is required for Nexus IQ scans because many organizations integrate Fortify (SAST) with Nexus IQ (SCA) for comprehensive security analysis. The Application ID serves the following purposes:
-
-Project Identification: Links the Nexus IQ scan results to a specific FPurpose of Nexus IQ Scans in CI Pipeline Execution
-Nexus IQ Server is the policy engine of Sonatype that performs Software Composition Analysis (SCA) — scanning your dependencies (Maven, npm, etc.) for:
-
-Open source license issues
-Security vulnerabilities (CVEs)
-Policy violations
-
-Nexus IQ scans are used in Continuous Integration (CI) pipelines to analyze and assess software dependencies for security vulnerabilities, license compliance, and policy violations. The primary benefits include:
-
-Security Analysis: Detects vulnerabilities in open-source libraries and dependencies.
-
-License Compliance: Ensures adherence to open-source licensing requirements.
-
-Policy Enforcement: Blocks builds if dependencies violate security policies.
-
-Risk Mitigation: Provides remediation guidance for identified vulnerabilities.
-
-Governance & Audit: Helps maintain an audit trail for dependency usage.
-
-The scan itself (dependency collection) happens on the build agent (CloudBees worker).
-
-The policy evaluation happens on the Nexus IQ Server (external to CI).
-
-The scan tool acts as a client, sending data to the IQ Server for final evaluation.
-
-Why is Fortify Application ID Required for Nexus IQ Scans?
-
-The Fortify Application ID is required for Nexus IQ scans because many organizations integrate Fortify (SAST) with Nexus IQ (SCA) for comprehensive security analysis. The Application ID serves the following purposes:
-
-Project Identification: Links the Nexus IQ scan results to a specific Fortify application profile.
-
-Correlation Between SAST & SCA: Helps correlate static code vulnerabilities (Fortify) with dependency vulnerabilities (Nexus IQ).
-
-Centralized Reporting: Allows consolidated security insights in dashboards.
-
-Policy-Based Actions: Enables automated enforcement of security policies across both SAST and SCA scans.ortify application profile.
+Update:
+We attempted failure scenario testing with Asharaf late last night, but the pod did not consume full CPU/memory even after setting 2 CPU and 4Gi limits, so the issue couldn’t be reproduced. We have identified an alternative method to push the pod to full capacity.
+Asharaf has requested testing of a few more scenarios, which require evidence from the worker nodes. Since the platform team doesn’t have node access, TKGI team support is needed. Asharaf will coordinate and schedule a call with TKGI to continue the tests.
