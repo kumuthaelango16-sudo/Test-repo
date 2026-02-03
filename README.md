@@ -1,31 +1,15 @@
+How do you read a value from a properties file in Groovy?
 
-Hi [Manager’s Name],
+What is the credentials block in Groovy, and what is its purpose?
 
-I hope you are doing well.
+How do you call a shell script from Groovy?
 
-I would like to formally request a release from my current project. As my H1B visa validity is approximately 1.5 years, I need to start exploring opportunities that align better with my long-term visa and career requirements.
+How do you call a REST API in Groovy?
 
-Additionally, my husband will be traveling to the US (Atlanta) this Friday. Due to this, I will be solely responsible for taking care of my child and may not be able to support second-shift work hours going forward.
+How do you handle exceptions in Groovy?
 
-Considering the above reasons, I kindly request your support in releasing me from the project. I will ensure a smooth transition and complete all knowledge transfer activities as required.
+How do you perform file handling operations in Groovy?
 
-Thank you very much for your understanding and support.
+What are Groovy utilities such as JsonOutput, and how do you read JSON output in Groovy?
 
-Warm regards,
-Ajay
-
-Hi [Manager’s Name],
-
-I hope you are doing well.
-
-I would like to discuss my request for release from the current project. With my H1B visa expiring in approximately 1.5 years, I need to start planning for a project that supports long-term continuity.
-
-In addition, my husband will be traveling to the US this Friday, and I will be managing my child’s responsibilities on my own. Due to this, it will be difficult for me to continue supporting second-shift work.
-
-Given these circumstances, I kindly request your understanding and approval for my release from the project. I will ensure all my responsibilities are transitioned smoothly.
-
-Thank you for your consideration and support.
-
-Best regards,
-Ajay
-
+How do you add and use a logger in Groovy?
