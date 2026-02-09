@@ -1,22 +1,43 @@
+
 #!/bin/bash
 set -e
 
-PERIOD_TYPE=$1
-FROM_INPUT=$2
-TO_INPUT=$3
+PROJECT=$1
+METRICS=$2
+SONAR_URL=$3
+TOKEN=$4
 
-TODAY=$(date +%Y-%m-%d)
+source dates.env
 
-if [[ "$PERIOD_TYPE" == "custom" && -n "$FROM_INPUT" && -n "$TO_INPUT" ]]; then
-  FROM_DATE=$FROM_INPUT
-  TO_DATE=$TO_INPUT
+mkdir -p cache
+
+CACHE_FILE="cache/${PROJECT}_${FROM_DATE}_${TO_DATE}.json"
+OUT_FILE="${PROJECT}.csv"
+
+echo "project,metric,date,value" > $OUT_FILE
+
+if [ -f "$CACHE_FILE" ]; then
+  echo "Using cache for $PROJECT"
 else
-  # default last 2 years
-  FROM_DATE=$(date -d "-2 years" +%Y-%m-%d)
-  TO_DATE=$TODAY
+  echo "Calling Sonar API for $PROJECT"
+
+  URL="$SONAR_URL/api/measures/search_history?component=$PROJECT&metrics=$METRICS&from=$FROM_DATE&to=$TO_DATE"
+
+  n=0
+  until [ "$n" -ge 3 ]
+  do
+    curl -s -u $TOKEN: "$URL" > "$CACHE_FILE" && break
+    n=$((n+1))
+    echo "Retry $n..."
+    sleep 5
+  done
 fi
 
-echo "FROM_DATE=$FROM_DATE" > dates.env
-echo "TO_DATE=$TO_DATE" >> dates.env
+# Convert JSON → CSV
+jq -r --arg P "$PROJECT" '
+.measures[] as $m |
+$m.history[] |
+[$P, $m.metric, .date, .value] | @csv
+' "$CACHE_FILE" >> $OUT_FILE
 
-echo "Using dates: $FROM_DATE → $TO_DATE"
+echo "Generated $OUT_FILE"
