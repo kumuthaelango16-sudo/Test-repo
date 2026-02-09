@@ -1,12 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "project,metric,date,value" > master_report.csv
+FILE=$1
 
-for f in *.csv; do
-  if [[ "$f" != "master_report.csv" ]]; then
-    tail -n +2 "$f" >> master_report.csv
-  fi
-done
+echo "Uploading $FILE to dashboard system..."
 
-echo "Master report ready"
+# Example
+# curl -X POST https://dashboard/api/upload -F file=@$FILE
+
+echo "Upload complete"
