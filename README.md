@@ -1,244 +1,135 @@
-# Design Document
+7. Migration Pipelines and Utilities
 
-## UDeploy to CloudBees CD Migration Accelerator
+The Migration Accelerator provides different pipelines to support multiple migration scenarios. These pipelines enable flexible migration of UDeploy entities into CloudBees CD depending on the migration scope.
 
-## 1. Overview
+7.1 Core Migration Pipelines
+1. Bulk Migration Pipeline
 
-This document describes the design of the Migration Accelerator used to migrate configurations from IBM UrbanCode Deploy (UDeploy) to CloudBees CD. The accelerator automates the extraction, transformation, and creation of deployment entities such as applications, components, environments, and processes.
+Suggested Name Options
 
-The goal of this accelerator is to reduce manual effort, improve migration accuracy, and accelerate the transition from UDeploy to CloudBees CD.
+UDeploy-Bulk-Migration-Pipeline
 
----
+Bulk-Migration-Accelerator
 
-## 2. Objectives
+Enterprise-Bulk-Migration-Pipeline
 
-* Automate extraction of metadata from UDeploy
-* Transform UDeploy configuration into CloudBees CD compatible format
-* Automatically create components and deployment processes in CloudBees CD
-* Provide validation and approval workflow before migration
-* Generate migration reports and validation results
+Purpose
+Migrates multiple applications and components in a single execution. This pipeline is typically used during large-scale migration initiatives.
 
----
+Capabilities
 
-## 3. Scope
+Accepts bulk input list
 
-### In Scope
+Migrates applications, components, and processes
 
-* Migration of Applications
-* Migration of Components
-* Migration of Deployment Processes
-* Migration of Properties
-* Metadata transformation and validation
+Generates consolidated migration report
 
-### Out of Scope
+2. Application Migration Pipeline
 
-* Application code migration
-* Infrastructure provisioning
+Suggested Name Options
 
----
+Application-Migration-Pipeline
 
-## 4. High Level Architecture
+UDeploy-Application-Migration
 
-The Migration Accelerator consists of the following logical stages:
+App-Level-Migration-Pipeline
 
-1. Migration Initiation
-2. Input Validation
-3. Metadata Extraction from UDeploy
-4. Metadata Transformation
-5. CloudBees CD Configuration Generation
-6. Migration Approval Workflow
-7. CloudBees CD Object Creation
-8. Post Migration Validation
-9. Migration Reporting
+Purpose
+Migrates a specific application from UDeploy to CloudBees CD.
 
----
+Capabilities
 
-## 5. Migration Workflow
+Extract application metadata
 
-### 5.1 Migration Initiation
+Migrate associated components
 
-The DevOps team initiates the migration by providing bulk input that includes:
+Migrate application processes
 
-* Applications
-* Components
-* Environments (optional)
-* Processes
+Configure environments
 
-This input acts as the starting point for the migration accelerator.
+3. Component Migration Pipeline
 
----
+Suggested Name Options
 
-### 5.2 Input Validation
+Component-Migration-Pipeline
 
-The accelerator validates the provided inputs before starting migration.
+UDeploy-Component-Migration
 
-Validation includes:
+Component-Level-Migration-Pipeline
 
-* Application existence check
-* Component mapping verification
-* Environment validation
-* Pre-migration dependency checks
+Purpose
+Migrates a single component and its associated configuration.
 
-If validation fails, the user must correct inputs and resubmit.
+Capabilities
 
----
+Export component metadata
 
-### 5.3 Metadata Extraction from UDeploy
+Migrate component processes
 
-The accelerator invokes UDeploy REST APIs to extract deployment metadata.
+Convert component steps
 
-Extracted metadata includes:
+Create component in CloudBees CD
 
-* Applications
-* Components
-* Component properties
-* Deployment processes
+7.2 Utility Pipelines
 
-The extracted data is stored as raw JSON metadata.
+Utility pipelines support migration by handling system-level configurations and artifacts.
 
----
+1. System Properties Migration Pipeline
 
-### 5.4 Metadata Normalization and Transformation
+Suggested Name Options
 
-The raw metadata exported from UDeploy is processed and normalized.
+System-Properties-Migration
 
-Activities include:
+Global-Properties-Migrator
 
-* Filtering unnecessary metadata
-* Normalizing configuration structure
-* Mapping UDeploy constructs to CloudBees CD constructs
+UDeploy-System-Config-Migration
 
-The transformation layer converts the metadata into CloudBees CD compatible format.
+Purpose
+Migrates system-level properties from UDeploy to CloudBees CD.
 
----
+Capabilities
 
-### 5.5 CloudBees CD Compatible Configuration Generation
+Extract global properties
 
-After transformation, the accelerator generates configuration files in CloudBees CD compatible formats such as:
+Map property keys
 
-* JSON
-* YAML
+Create properties in CloudBees CD
 
-These configuration files represent:
+2. Version Properties & Artifact Migration Pipeline
 
-* Components
-* Applications
-* Deployment processes
+Suggested Name Options
 
----
+Version-Metadata-Migration
 
-### 5.6 Migration Review and Approval
+Artifact-Version-Migration
 
-Before executing the migration in CloudBees CD, a review step is performed.
+Component-Version-Migration
 
-The DevOps team reviews:
+Purpose
+Migrates version-level metadata and artifacts associated with components.
 
-* Migration summary
-* Generated configurations
-* Component mappings
+Capabilities
 
-Based on the review, the migration can be:
+Extract component versions
 
-* Approved
-* Rejected
+Migrate version properties
 
-If rejected, the process returns to validation for corrections.
+Map artifact locations
 
----
+Re-register artifacts in CloudBees CD
 
-### 5.7 CloudBees CD Object Creation
+💡 Recommended Naming Convention (Best Practice)
 
-Once approved, the accelerator creates objects in CloudBees CD.
+Use a consistent prefix like:
 
-The following entities are created:
+CBCD-UDeploy-Bulk-Migration
+CBCD-UDeploy-App-Migration
+CBCD-UDeploy-Component-Migration
+CBCD-UDeploy-System-Properties-Migration
+CBCD-UDeploy-Version-Artifact-Migration
 
-1. Components
-2. Applications
-3. Environments (optional/manual)
-4. Deployment Processes
-5. Resource and Agent Mapping
+This makes pipelines easy to identify and manage in CloudBees CD.
 
----
+If you want, I can also help you create a very strong architecture section for the document:
 
-## 6. Special Handling
-
-### PCF Applications
-
-For PCF-based applications:
-
-* Only application configuration migration is required
-* Component process migration is not required
-
-### Non-PCF Applications
-
-For non-PCF applications:
-
-* Application processes must be migrated
-* Component processes must be migrated
-* Each step within component processes must be converted to CloudBees CD compatible steps
-
-This is one of the most challenging aspects of the migration since shell scripts and configurations must be translated into equivalent CloudBees CD pipeline steps.
-
----
-
-## 7. Post Migration Validation
-
-After migration, validation checks are performed to ensure successful migration.
-
-Validation includes:
-
-* Component count verification
-* Process structure validation
-* Property validation
-
-These checks ensure the migrated configurations match the source system.
-
----
-
-## 8. Migration Report
-
-At the end of migration, the accelerator generates a migration report.
-
-The report includes:
-
-* Migration status (Success / Partial / Failed)
-* Number of components migrated
-* Number of processes migrated
-* Validation results
-
----
-
-## 9. Error Handling
-
-Common failure scenarios include:
-
-* API failures during metadata extraction
-* Transformation errors
-* Missing component mappings
-* Invalid process configurations
-
-The accelerator logs errors and allows re-validation and resubmission.
-
----
-
-## 10. Benefits
-
-* Reduces manual migration effort
-* Improves migration consistency
-* Accelerates DevOps platform transition
-* Provides repeatable migration framework
-
----
-
-## 11. Future Enhancements
-
-* Automated environment migration
-* Intelligent step conversion using templates
-* Dashboard for migration progress
-* Integration with CI/CD governance tools
-
----
-
-## 12. Migration Completion
-
-Once validation passes and the report is generated, the migration process is considered complete.
+“Accelerator Pipeline Execution Flow” (which architects usually expect in design docs).
