@@ -1,135 +1,62 @@
-7. Migration Pipelines and Utilities
+pipeline {
+    agent none
 
-The Migration Accelerator provides different pipelines to support multiple migration scenarios. These pipelines enable flexible migration of UDeploy entities into CloudBees CD depending on the migration scope.
+    stages {
+        stage('Run Job') {
+            agent {
+                // Priority:
+                // 1. Override from triggered build
+                // 2. Global env variable
+                // 3. Default fallback
+                label "${params.AGENT_LABEL_OVERRIDE ?: (env.AGENT_LABEL ?: 'Dev_Common_Node')}"
+            }
 
-7.1 Core Migration Pipelines
-1. Bulk Migration Pipeline
+            steps {
+                script {
 
-Suggested Name Options
+                    // Resolve final agent (for logging)
+                    def selectedAgent = params.AGENT_LABEL_OVERRIDE ?: (env.AGENT_LABEL ?: 'Dev_Common_Node')
+                    echo "Running on agent: ${selectedAgent}"
 
-UDeploy-Bulk-Migration-Pipeline
+                    try {
+                        // 👉 Replace this with your actual job
+                        sh '''
+                        echo "Starting execution..."
+                        # your real commands go here
+                        sleep 5
+                        '''
 
-Bulk-Migration-Accelerator
+                    } catch (err) {
 
-Enterprise-Bulk-Migration-Pipeline
+                        // 🔍 Detect OOM scenarios
+                        def isOOM = err.toString().contains('OutOfMemoryError') ||
+                                    err.toString().contains('Java heap space') ||
+                                    err.toString().contains('Killed')
 
-Purpose
-Migrates multiple applications and components in a single execution. This pipeline is typically used during large-scale migration initiatives.
+                        if (isOOM && !params.AGENT_LABEL_OVERRIDE) {
+                            echo "OOM detected! Triggering new build on dynamic_node_8gi..."
 
-Capabilities
+                            build job: env.JOB_NAME,
+                                  parameters: [
+                                      string(name: 'AGENT_LABEL_OVERRIDE', value: 'dynamic_node_8gi')
+                                  ],
+                                  wait: false
+                        }
 
-Accepts bulk input list
+                        // Fail current build
+                        error("Build failed due to: ${err}")
+                    }
+                }
+            }
+        }
+    }
 
-Migrates applications, components, and processes
-
-Generates consolidated migration report
-
-2. Application Migration Pipeline
-
-Suggested Name Options
-
-Application-Migration-Pipeline
-
-UDeploy-Application-Migration
-
-App-Level-Migration-Pipeline
-
-Purpose
-Migrates a specific application from UDeploy to CloudBees CD.
-
-Capabilities
-
-Extract application metadata
-
-Migrate associated components
-
-Migrate application processes
-
-Configure environments
-
-3. Component Migration Pipeline
-
-Suggested Name Options
-
-Component-Migration-Pipeline
-
-UDeploy-Component-Migration
-
-Component-Level-Migration-Pipeline
-
-Purpose
-Migrates a single component and its associated configuration.
-
-Capabilities
-
-Export component metadata
-
-Migrate component processes
-
-Convert component steps
-
-Create component in CloudBees CD
-
-7.2 Utility Pipelines
-
-Utility pipelines support migration by handling system-level configurations and artifacts.
-
-1. System Properties Migration Pipeline
-
-Suggested Name Options
-
-System-Properties-Migration
-
-Global-Properties-Migrator
-
-UDeploy-System-Config-Migration
-
-Purpose
-Migrates system-level properties from UDeploy to CloudBees CD.
-
-Capabilities
-
-Extract global properties
-
-Map property keys
-
-Create properties in CloudBees CD
-
-2. Version Properties & Artifact Migration Pipeline
-
-Suggested Name Options
-
-Version-Metadata-Migration
-
-Artifact-Version-Migration
-
-Component-Version-Migration
-
-Purpose
-Migrates version-level metadata and artifacts associated with components.
-
-Capabilities
-
-Extract component versions
-
-Migrate version properties
-
-Map artifact locations
-
-Re-register artifacts in CloudBees CD
-
-💡 Recommended Naming Convention (Best Practice)
-
-Use a consistent prefix like:
-
-CBCD-UDeploy-Bulk-Migration
-CBCD-UDeploy-App-Migration
-CBCD-UDeploy-Component-Migration
-CBCD-UDeploy-System-Properties-Migration
-CBCD-UDeploy-Version-Artifact-Migration
-
-This makes pipelines easy to identify and manage in CloudBees CD.
-
-If you want, I can also help you create a very strong architecture section for the document:
-
-“Accelerator Pipeline Execution Flow” (which architects usually expect in design docs).
+    post {
+        success {
+            echo "Build completed successfully."
+        }
+        failure {
+            echo "Build failed. Check logs."
+        }
+    }
+}
