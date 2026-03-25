@@ -1,62 +1,30 @@
-pipeline {
-    agent none
+def isOOM(log) {
+    def oomPattern = ~/(outofmemoryerror|java\s+heap\s+space|gc\s+overhead\s+limit\s+exceeded|oomkilled|killed\s+process|exit\s+code\s+137|container\s+killed)/
+    return oomPattern.matcher(log).find()
+}
 
-    stages {
-        stage('Run Job') {
-            agent {
-                // Priority:
-                // 1. Override from triggered build
-                // 2. Global env variable
-                // 3. Default fallback
-                label "${params.AGENT_LABEL_OVERRIDE ?: (env.AGENT_LABEL ?: 'Dev_Common_Node')}"
-            }
 
-            steps {
-                script {
+def handleMemoryIssue() {
+    echo "Memory issue detected, retrying build..."
 
-                    // Resolve final agent (for logging)
-                    def selectedAgent = params.AGENT_LABEL_OVERRIDE ?: (env.AGENT_LABEL ?: 'Dev_Common_Node')
-                    echo "Running on agent: ${selectedAgent}"
+    // جلوگیری infinite loop
+    if (params.AGENT_LABEL_OVERRIDE == 'dynamic_node_14Gi') {
+        echo "Already retried with higher memory node. Skipping retry."
+        return
+    }
 
-                    try {
-                        // 👉 Replace this with your actual job
-                        sh '''
-                        echo "Starting execution..."
-                        # your real commands go here
-                        sleep 5
-                        '''
-
-                    } catch (err) {
-
-                        // 🔍 Detect OOM scenarios
-                        def isOOM = err.toString().contains('OutOfMemoryError') ||
-                                    err.toString().contains('Java heap space') ||
-                                    err.toString().contains('Killed')
-
-                        if (isOOM && !params.AGENT_LABEL_OVERRIDE) {
-                            echo "OOM detected! Triggering new build on dynamic_node_8gi..."
-
-                            build job: env.JOB_NAME,
-                                  parameters: [
-                                      string(name: 'AGENT_LABEL_OVERRIDE', value: 'dynamic_node_8gi')
-                                  ],
-                                  wait: false
-                        }
-
-                        // Fail current build
-                        error("Build failed due to: ${err}")
-                    }
-                }
-            }
+    // Collect all parameters and override only one
+    def newParams = params.collect { key, value ->
+        if (key == 'AGENT_LABEL_OVERRIDE') {
+            return string(name: key, value: 'dynamic_node_14Gi')
+        } else {
+            return string(name: key, value: value.toString())
         }
     }
 
-    post {
-        success {
-            echo "Build completed successfully."
-        }
-        failure {
-            echo "Build failed. Check logs."
-        }
-    }
+    echo "Triggering rebuild with updated agent label..."
+
+    build job: env.JOB_NAME,
+          parameters: newParams,
+          wait: false
 }
