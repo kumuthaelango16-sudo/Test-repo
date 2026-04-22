@@ -1,108 +1,229 @@
-def runStageWithRetry(stageName, closure) {
-    int maxRetries = 1
 
-    for (int attempt = 0; attempt <= maxRetries; attempt++) {
+def SonarScan = "No"
+def NexusIQScan = "No"
+def FortifyScan = "No"
+def ManifestValidation = [:]
+def failedStages = []
+
+def devopsPipelineFlow = (params.DEVOPS_PIPELINE_FLOW != null) ?
+    params.DEVOPS_PIPELINE_FLOW :
+    "Application-Build-and-Deploy-Flow"
+
+
+/* ----------------------------------------------------
+   Self Healing Memory Retry Logic
+   1st Try  : env.AGENT_LABEL OR dynamic_node (4Gi)
+   2nd Try  : dynamic_node_8Gi
+   3rd Try  : dynamic_node_14Gi
+---------------------------------------------------- */
+
+def runWithMemoryFallback(String stageName, Closure body) {
+
+    def labels = [
+        env.AGENT_LABEL ?: "dynamic_node",
+        "dynamic_node_8Gi",
+        "dynamic_node_14Gi"
+    ]
+
+    for (int i = 0; i < labels.size(); i++) {
+
         try {
-            stage(stageName) {
-                closure()
+
+            node(labels[i]) {
+
+                echo "Running ${stageName} on ${labels[i]}"
+                body()
             }
-            return // success → exit
 
-        } catch (err) {
-            def log = currentBuild.rawBuild.getLog(2000).join("\n").toLowerCase()
+            return
+        }
+        catch (Exception e) {
 
-            if (isOOM(log) && attempt < maxRetries) {
-                echo "OOM detected in stage: ${stageName}"
+            echo "${stageName} failed on ${labels[i]}"
 
-                // Prevent infinite retry
-                if (params.AGENT_LABEL_OVERRIDE == 'dynamic_node_14Gi') {
-                    echo "Already retried with high memory. Skipping retry."
-                    throw err
+            if (isOOMError(e)) {
+
+                if (i == labels.size() - 1) {
+                    failedStages << stageName
+                    error("${stageName} failed due to OOM even on 14Gi")
                 }
 
-                // Override agent label for retry
-                env.AGENT_LABEL = 'dynamic_node_14Gi'
-                echo "Retrying ${stageName} on higher memory node..."
-
-            } else {
-                throw err
+                echo "OOM detected. Retrying ${stageName} on higher memory node..."
+            }
+            else {
+                failedStages << stageName
+                throw e
             }
         }
     }
 }
 
-def runStageWithRetry(stageName, closure) {
-    int maxRetries = 1
+def isOOMError(def err) {
 
-    for (int attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            stage(stageName) {
-                closure()
-            }
-            return // success → exit
+    def msg = err.toString().toLowerCase()
 
-        } catch (err) {
-            def log = currentBuild.rawBuild.getLog(2000).join("\n").toLowerCase()
-
-            if (isOOM(log) && attempt < maxRetries) {
-                echo "OOM detected in stage: ${stageName}"
-
-                // Prevent infinite retry
-                if (params.AGENT_LABEL_OVERRIDE == 'dynamic_node_14Gi') {
-                    echo "Already retried with high memory. Skipping retry."
-                    throw err
-                }
-
-                // Override agent label for retry
-                env.AGENT_LABEL = 'dynamic_node_14Gi'
-                echo "Retrying ${stageName} on higher memory node..."
-
-            } else {
-                throw err
-            }
-        }
-    }
+    return msg.contains("oom") ||
+           msg.contains("outofmemory") ||
+           msg.contains("java heap space") ||
+           msg.contains("exit code 137") ||
+           msg.contains("killed") ||
+           msg.contains("container terminated")
 }
+
+
 
 pipeline {
+
     agent none
 
-    parameters {
-        string(name: 'AGENT_LABEL_OVERRIDE', defaultValue: '', description: '')
+    options {
+        timeout(activity: true, time: 210, unit: 'MINUTES')
+    }
+
+    environment {
+        TOOL_NAME = "Maven"
     }
 
     stages {
 
-        stage('Build') {
-            agent { label params.AGENT_LABEL_OVERRIDE ?: 'dynamic_node' }
+        stage('Workspace Cleanup') {
             steps {
                 script {
-                    runStageWithRetry('Build') {
-                        sh 'echo Building...'
-                        // sh 'exit 137' // simulate OOM
+                    runWithMemoryFallback("Workspace Cleanup") {
+                        cleanWs deleteDirs: true
                     }
                 }
             }
         }
 
-        stage('Test') {
-            agent { label params.AGENT_LABEL_OVERRIDE ?: env.AGENT_LABEL ?: 'dynamic_node' }
+        stage('PreValidation Check') {
             steps {
                 script {
-                    runStageWithRetry('Test') {
-                        sh 'echo Testing...'
+                    runWithMemoryFallback("PreValidation Check") {
+                        execValidationChecks(params)
                     }
                 }
             }
         }
 
-        stage('Deploy') {
-            agent { label params.AGENT_LABEL_OVERRIDE ?: env.AGENT_LABEL ?: 'dynamic_node' }
+        stage('ScanParallel') {
+
+            when {
+                expression {
+                    devopsPipelineFlow.contains("Application-Build-and-Deploy-Flow")
+                }
+            }
+
+            parallel {
+
+                stage('Sonar') {
+                    steps {
+                        script {
+                            runWithMemoryFallback("Sonar") {
+                                env.TOOL_NAME = "SonarQube"
+                                SonarScan = execSonarScan(params)
+                            }
+                        }
+                    }
+                }
+
+                stage('Fortify') {
+                    steps {
+                        script {
+                            runWithMemoryFallback("Fortify") {
+                                env.TOOL_NAME = "Fortify"
+                                FortifyScan = execFortifyScan(params)
+                            }
+                        }
+                    }
+                }
+
+                stage('Nexus-IQ') {
+                    steps {
+                        script {
+                            runWithMemoryFallback("Nexus-IQ") {
+                                env.TOOL_NAME = "NexusIQ"
+                                NexusIQScan = execNexusIQScan(params)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Jmeter Performance Test') {
+
+            when {
+                expression {
+                    params.RUNPERFORMANCETEST == "Yes"
+                }
+            }
+
             steps {
                 script {
-                    runStageWithRetry('Deploy') {
-                        sh 'echo Deploying...'
+                    runWithMemoryFallback("Jmeter Performance Test") {
+                        execJMeter(params)
                     }
+                }
+            }
+        }
+
+        stage('Newman') {
+
+            when {
+                expression {
+                    devopsPipelineFlow.contains("Application-Build-and-Deploy-Flow")
+                }
+            }
+
+            steps {
+                script {
+                    runWithMemoryFallback("Newman") {
+                        execNewMan(params)
+                    }
+                }
+            }
+        }
+
+    }
+
+    post {
+
+        always {
+
+            script {
+
+                if (params.RUNPERFORMANCETEST == "Yes") {
+
+                    perfReport(
+                        filterRegex: '',
+                        showTrendGraphs: true,
+                        sourceDataFiles: '**/*.jtl'
+                    )
+                }
+
+                execEmail(params)
+
+                if (currentBuild.result == 'SUCCESS') {
+
+                    buildSuccess()
+
+                } else if (currentBuild.result == 'UNSTABLE') {
+
+                    buildFailed("Build is Unstable", "UNSTABLE")
+
+                } else if (currentBuild.result == 'ABORTED') {
+
+                    buildAborted()
+
+                } else {
+
+                    def failedStageMessage = failedStages.join(", ")
+
+                    buildFailed(
+                        "Build is Failing at stage ${failedStageMessage}",
+                        "FAILURE"
+                    )
                 }
             }
         }
